@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Scraper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .platforms {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+    }
+    .platform-icon {
+      cursor: pointer;
+      width: 100px;
+      height: auto;
+    }
+    .input-container {
+      margin-top: 20px;
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1> Reviews Scraper </h1>
+
+  <div class="platforms">
+    <img id="flipkart-icon" src="/static/logos/flipkart-logo.png" class="platform-icon" alt="Flipkart">
+    <img id="amazon-icon" src="/static/logos/amazon-logo.png" class="platform-icon" alt="Amazon">
+  </div>
+
+  <h2 id="platform-title">Select a platform</h2>
+
+  <div class="input-container">
+    <input type="text" id="url-input" placeholder="Enter the product URL">
+    <button id="go-button">GO</button>
+  </div>
+
+  <script>
+    const platformTitle = document.getElementById('platform-title');
+    const goButton = document.getElementById('go-button');
+
+    let selectedPlatform = '';
+
+    document.getElementById('flipkart-icon').addEventListener('click', () => {
+      platformTitle.textContent = 'Flipkart';
+      selectedPlatform = 'flipkart';
+    });
+
+    document.getElementById('amazon-icon').addEventListener('click', () => {
+      platformTitle.textContent = 'Amazon';
+      selectedPlatform = 'amazon';
+    });
+
+    goButton.addEventListener('click', () => {
+      const url = document.getElementById('url-input').value;
+      
+      if (url && selectedPlatform) {
+        fetch('/scrape', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url: url, platform: selectedPlatform }),
+        })
+        .then(response => {
+          if (response.ok) {
+            return response.blob();
+          } else {
+            throw new Error('Failed to scrape reviews');
+          }
+        })
+        .then(blob => {
+          const a = document.createElement('a');
+          const url = window.URL.createObjectURL(blob);
+          a.href = url;
+          a.download = 'scraped_reviews.csv';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.URL.revokeObjectURL(url);
+        })
+        .catch(error => {
+          alert(error.message);
+        });
+      } else {
+        alert('Please select a platform and enter a product URL!');
+      }
+    });
+  </script>
+</body>
+</html>
